@@ -1,0 +1,186 @@
+<html>
+    <head>
+        <title>Data Validation using spark on local</title>
+        <link rel="stylesheet" type="text/css" href="{{url_for('static',filename='bootstrap-material-design.css')}}" >
+        <!--<link rel="stylesheet" type="text/css" href="{{url_for('static',filename='loader.css')}}" >-->
+    </head>
+    <body>
+        <nav class="navbar sticky-top navbar-light bg-light">
+            <div class="container-fluid">
+              <a class="navbar-brand" href="#">
+                Data Validation Framework using Spark ⚡️
+              </a>
+            </div>
+          </nav>
+        <div class="container">
+            <div id="content" class="col">
+                <form method="POST" action="{{url_for('validationOutput')}}" id="form_submit">    
+                <br />
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="card border border-success shadow-0 mb-3">
+                            <h5 class="card-header">Source Database Details</h5>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label for="sourceURL" class="bmd-label-floating">Source URL:</label>    
+                                            <input type="text" class="form-control" id="sourceURL"  name="sourceURL" value="" required>
+                                            <span class="bmd-help">servername.database.windows.net</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label for="sourceUser" class="bmd-label-floating">Username:</label>
+                                            <input class="form-control" id="sourceUser" name="sourceUser" type="text" value="" required>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label for="sourcePassword" class="bmd-label-floating">Password:</label>
+                                            <input class="form-control" id="sourcePassword" name="sourcePassword" type="password" value="" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label for="sourceDB" class="bmd-label-floating">Source Database:</label>
+                                            <input class="form-control" id="sourceDB" name="sourceDB" type="text" value="" required>
+                                            <span class="bmd-help">Source Database Name</span>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label for="sourceTable" class="bmd-label-floating">Source Table:</label>
+                                            <input class="form-control" id="sourceTable" name="sourceTable" type="text" value="" required>
+                                            <span class="bmd-help">source schema.tableName</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="card border border-success shadow-0 mb-3">
+                            <h5 class="card-header">Target Database Details</h5>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label for="targetURL" class="bmd-label-floating">Target URL:</label>    
+                                            <input type="text" class="form-control" id="targetURL"  name="targetURL" value="" required>
+                                            <span class="bmd-help">servername.database.windows.net</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label for="targetUser" class="bmd-label-floating">Username:</label>
+                                            <input class="form-control" id="targetUser" name="targetUser" type="text" value="" required>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label for="targetPassword" class="bmd-label-floating">Password:</label>
+                                            <input class="form-control" id="targetPassword" name="targetPassword" type="password" value="" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label for="targetDB" class="bmd-label-floating">Target Database:</label>
+                                            <input class="form-control" id="targetDB" name="targetDB" type="text" value="" required>
+                                            <span class="bmd-help">Target Database Name</span>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label for="targetTable" class="bmd-label-floating">Target Table:</label>
+                                            <input class="form-control" id="targetTable" name="targetTable" type="text" value="" required>
+                                            <span class="bmd-help">Target schema.tableName</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="card border border-success shadow-0 mb-3">
+                            <h5 class="card-header text-center">Common Details</h5>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label for="keyColumns" class="bmd-label-floating">Key Columns:</label>
+                                            <input class="form-control col-sm-8" id="keyColumns" name="keyColumns" type="text" value="" required>
+                                            <span class="bmd-help">comma separated(col1, col2, col3)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label for="excludedColumns" class="bmd-label-floating">Excluded Columns:</label>
+                                            <input class="form-control col-sm-8" id="excludedColumns" name="excludedColumns" type="text" value="">
+                                            <span class="bmd-help">comma separated(col1, col2, col3)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label for="filterCondition" class="bmd-label-floating">Filter Condition:</label>
+                                            <textarea class="form-control col-sm-8" id="filterCondition" name="filterCondition" type="text" value="" rows="3" required></textarea>
+                                            <span class="bmd-help">Write filter condition</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col d-flex justify-content-center">
+                                        <div class="form-group">
+                                            <input class="btn btn-raised btn-primary" id="submit" name="submit"  type="submit" value="submit">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    
+
+                </form>
+            </div>
+            
+        </div>
+        <footer class="bg-light text-center text-lg-start">
+            <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.2);">
+                Made with ❤️
+            </div>
+          </footer>
+       
+       
+    
+       
+    <script src="{{url_for('static',filename='jquery-3.2.1.slim.min.js')}}"></script>
+    <script src="{{url_for('static',filename='popper.js')}}"></script>   
+    <script src="{{url_for('static',filename='bootstrap-material-design.js')}}"></script>
+    
+    
+    <script>$(document).ready(function() { $('body').bootstrapMaterialDesign(); });</script>
+    <script>
+        $("#form_submit").submit(function(event) {
+            $("#submit").prop('disabled',true)
+        })
+    </script>
+
+    </body>
+</html>

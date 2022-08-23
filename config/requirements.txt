@@ -1,0 +1,4 @@
+pyspark>=3.2.2
+flask
+pandas
+gunicorn
