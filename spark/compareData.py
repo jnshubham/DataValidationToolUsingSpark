@@ -1,4 +1,5 @@
 import argparse
+from tkinter import N
 from pyspark.sql.session import SparkSession
 from pyspark.sql import Window
 from pyspark.sql.functions import row_number, coalesce, lit, when, concat_ws, col
@@ -14,13 +15,13 @@ def setConfig():
         os.environ['HADOOP_HOME'] = filePath
         sys.path.append(filePath)
         driverPath = f'{filePath}\\bin\\mssql-jdbc-11.2.0.jre8.jar;:{filePath}\\bin\\mssql-jdbc_auth-11.2.0.x64.dll;'
-        outputPath_pandas = f'{filePath}\\output\\{int(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))}\\comparisionResult.csv'
-        outputPath_spark = f'{filePath}\\output\\{int(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))}'
+        outputPath = f'{filePath}\\output\\{int(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))}\\filename'
+        os.makedirs(outputPath.replace('filename',''))
     else:
         driverPath = f'{filePath}/bin/mssql-jdbc-11.2.0.jre8.jar;:{filePath}/bin/mssql-jdbc_auth-11.2.0.x64.dll;'
-        outputPath_pandas = f'{filePath}/output/{int(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))}/comparisionResult.csv'
-        outputPath_spark = f'{filePath}/output/{int(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))}'
-    return driverPath, outputPath_pandas, outputPath_spark
+        outputPath = f'{filePath}/output/{int(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))}/filename'
+        os.makedirs(outputPath.replace('comparisionType','countValidation').replace('filename',''))
+    return driverPath, outputPath
 
 
 def getData(url: str, table: str, spark: SparkSession, filterCondition: str) -> DataFrame:
@@ -31,8 +32,7 @@ def getData(url: str, table: str, spark: SparkSession, filterCondition: str) -> 
     if(filterCondition):
         df.createOrReplaceTempView('table')
         df = spark.sql(f'select * from table where {filterCondition}')
-        #can remove this code
-        df = df.dropDuplicates()
+
     return df
 
 
@@ -43,13 +43,11 @@ def saveDataPandas(df: DataFrame, path: str, **kwargs):
     pdf = df.toPandas()
     pdf.to_csv(path, **kwargs)
 
-def compareData(sdf: DataFrame, tdf: DataFrame, args: dict):
+def compareData(sdf: DataFrame, tdf: DataFrame, outputPath: str, args: dict) -> DataFrame:
     eColumns = list(map(lambda x: x.strip(), args['excludedColumns'].split(',')))
     kColumns = list(map(lambda x: x.strip(),args['keyColumns'].split(',')))
     rColumns = [col for col in sdf.columns if col not in eColumns]
-    print(eColumns)
-    print(kColumns)
-    print(rColumns)
+    
     dfpre = sdf.select(*rColumns).\
               withColumn('rowid', concat_ws(',',*kColumns))
     dfpost = tdf.select(*rColumns).\
@@ -61,7 +59,7 @@ def compareData(sdf: DataFrame, tdf: DataFrame, args: dict):
     
     df_combCached = dfComb.persist()
     #df_combCached = dfComb
-    print(df_combCached.count())
+    df_combCached.count()
 
     mismC = []
     for cm in rColumns:
@@ -70,7 +68,6 @@ def compareData(sdf: DataFrame, tdf: DataFrame, args: dict):
 
     firstFlag = True
     for clm in rColumns:
-        print(clm)
         key = list(map(lambda x: x+'_pre',kColumns))
         if(firstFlag):
             dfFinal = df_combCached.filter(col(clm)=='false').\
@@ -79,7 +76,8 @@ def compareData(sdf: DataFrame, tdf: DataFrame, args: dict):
             lit(clm).cast('string').alias('ColumnName'),
             col(clm+'_pre').cast('string').alias('pre'),
             col(clm+'_post').cast('string').alias('post'),
-            lit('Differences found').alias('Comments')
+            when(col(clm+'_pre').cast('int').isNotNull() & col(clm+'_post').cast('int').isNotNull(),\
+                 col(clm+'_pre')-col(clm+'_post')).otherwise(lit('Differences found')).alias('Comments')
             )
             firstFlag = False
         else:
@@ -89,7 +87,8 @@ def compareData(sdf: DataFrame, tdf: DataFrame, args: dict):
             lit(clm).cast('string').alias('ColumnName'),
             col(clm+'_pre').cast('string').alias('pre'),
             col(clm+'_post').cast('string').alias('post'),
-            lit('Differences found').alias('Comments')
+            when(col(clm+'_pre').cast('int').isNotNull() & col(clm+'_post').cast('int').isNotNull(),\
+                 col(clm+'_pre')-col(clm+'_post')).otherwise(lit('Differences found')).alias('Comments')
             ))
             
             
@@ -114,12 +113,74 @@ def compareData(sdf: DataFrame, tdf: DataFrame, args: dict):
                         )
     
     dfFinal = dfFinal.union(dfMissingRowsPost).union(dfMissingRowsPre)
-    dfFinal.show()
-    return dfFinal
+    if(dfFinal.count()>0):
+        saveDataPandas(dfFinal, outputPath.replace('filename','dataComparision_FAILED.csv'), index=False, header=True, mode='w+')
+    else:
+        saveDataPandas(dfFinal, outputPath.replace('filename','dataComparision_SUCCESS.csv'), index=False, header=True, mode='w+')
+
+    
     
 
+def countValidation(sdf: DataFrame, tdf: DataFrame, outputPath: str):
+    sourceCount = sdf.count()
+    targetCount = tdf.count()
+    sdf = sdf.dropDuplicates()
+    tdf = tdf.dropDuplicates()
+    source2Count = sdf.count()
+    target2Count = tdf.count()
+    
+    countResult = ''
+    if(sourceCount==targetCount and source2Count==target2Count):
+        countResult = countResult + f'Before removing duplicates \n Source Count: {str(sourceCount)} \n Target Count: {str(targetCount)} \n After removing duplicates \n Source Count: {str(source2Count)} \n Target Count: {str(target2Count)} \n Count Validation Passes.'
+        outputPath = outputPath.replace('filename','countComparision_SUCCESS.txt')
+    elif(sourceCount==targetCount):
+        countResult = countResult + f'Before removing duplicates \n Source Count: {str(sourceCount)} \n Target Count: {str(targetCount)} \n After removing duplicates \n Source Count: {str(source2Count)} \n Target Count: {str(target2Count)} \n Count Validation Failed.'
+        outputPath = outputPath.replace('filename','countComparision_FAILED.txt')
+    elif(source2Count==target2Count):
+        countResult = countResult + f'Before removing duplicates \n Source Count: {str(sourceCount)} \n Target Count: {str(targetCount)} \n After removing duplicates \n Source Count: {str(source2Count)} \n Target Count: {str(target2Count)} \n Count Validation Failed but will continue further testing.'
+        outputPath = outputPath.replace('filename','countComparision_FAILED.txt')
+    else:
+        countResult = countResult + f'Before removing duplicates \n Source Count: {str(sourceCount)} \n Target Count: {str(targetCount)} \n After removing duplicates \n Source Count: {str(source2Count)} \n Target Count: {str(target2Count)} \n Count Validation Failed.'
+        outputPath = outputPath.replace('filename','countComparision_FAILED.txt')
+    
+    with open(outputPath,'w+') as t:
+            t.write(countResult)
+        
+def DataTypeValidation(surl: str, turl: str, outputPath:str, stable: str, ttable: str, spark: SparkSession) -> DataFrame:
+    dtQuery = '''SELECT COLUMN_NAME, DATA_TYPE+'('+ case when CHARACTER_MAXIMUM_LENGTH is not null then cast(CHARACTER_MAXIMUM_LENGTH as varchar) else
+case when NUMERIC_PRECISION is not null then cast(NUMERIC_PRECISION as varchar) +', '+cast(NUMERIC_SCALE as varchar)  else cast(DATETIME_PRECISION as varchar)  end end  +')' as datatype, ORDINAL_POSITION
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE table_schema='{0}' and 
+TABLE_NAME = '{1}'
+'''
+
+    sdtQuery = dtQuery.format(stable.split('.')[0], stable.split('.')[1])
+    tdtQuery = dtQuery.format(ttable.split('.')[0], ttable.split('.')[1])
+
+    sDTdf = spark.read.format("jdbc") \
+        .option("url", surl) \
+        .option("query", sdtQuery) \
+        .option("driver", 'com.microsoft.sqlserver.jdbc.SQLServerDriver').load()
+        
+    tDTdf = spark.read.format("jdbc") \
+        .option("url", turl) \
+        .option("query", tdtQuery) \
+        .option("driver", 'com.microsoft.sqlserver.jdbc.SQLServerDriver').load()
+        
+    fDTdf = sDTdf.join(tDTdf, on='COLUMN_NAME', how='full').\
+        select(sDTdf['ORDINAL_POSITION'], tDTdf['ORDINAL_POSITION'], sDTdf['COLUMN_NAME'], tDTdf['COLUMN_NAME'], sDTdf['datatype'], tDTdf['datatype'],
+        ((sDTdf['ORDINAL_POSITION']==tDTdf['ORDINAL_POSITION']) & (sDTdf['COLUMN_NAME']==tDTdf['COLUMN_NAME']) & (sDTdf['datatype']==tDTdf['datatype'])).alias('MatchResult'))
+        
+    if(fDTdf.filter(col('MatchResult')=='false').count()>=1):
+        saveDataPandas(fDTdf, outputPath.replace('filename','dataComparision_FAILED.csv'), index=False, header=True, mode='w+')
+    else:
+        saveDataPandas(fDTdf, outputPath.replace('filename','dataComparision_SUCCESS.csv'), index=False, header=True, mode='w+')
+        
+        
+
+
 def main(args):
-    driverPath, opPandas, opSpark = setConfig()
+    driverPath, outputPath = setConfig()
     
     #Generate Local Spark Session
     spark = SparkSession \
@@ -130,7 +191,7 @@ def main(args):
         .getOrCreate()
     
     #.config("spark.sql.execution.arrow.enabled-", "true") \
-    print(spark.sparkContext._conf.getAll())
+    #print(spark.sparkContext._conf.getAll())
     #.config("spark.driver.extraClassPath",'C:\\TestData\\mssql-jdbc_auth-11.2.0.x64.dll') \
 
     sourceURL = 'jdbc:sqlserver://{sourceURL};databaseName={sourceDatabase};username={sourceUser};password={sourcePassword};'.format(**vars(args))
@@ -139,13 +200,21 @@ def main(args):
     #Get Source Data
     sdf = getData(sourceURL, args.sourceTable, spark, args.filterCondition)
     tdf = getData(targetURL, args.targetTable, spark, args.filterCondition)
-
-    fdf = compareData(sdf, tdf, vars(args))
-    #saveData(fdf, opSpark, header=True, mode=
+    #saveData(fdf, outputPath.replace('comparisionType','dataValidation').replace('filename',''), header=True, mode=
     # 'overwrite')
-    saveDataPandas(fdf, opPandas, index=False, header=True, mode='w+')
+    
     #url = 'jdbc:sqlserver://GMWCNSQLV00288.gdc0.chevron.net\SQL02;databaseName=CREDIT_INT_T2;integratedSecurity=true;trusted_connection=true'
     #url = 'jdbc:sqlserver://cashappcredit-dev2-cvx.database.windows.net;databaseName=cashappcredit-dev2-cvx;username=dbadmin-cashappcredit-dev2;password=b6sJkWzqYBnXT1kvXeHtwQuCbCBQSsc9;'
+    
+    countstart = datetime.datetime.now()
+    countValidation(sdf, tdf, outputPath)
+    print(f'Time Taken for Count Validation:{str(datetime.datetime.now()-countstart)}')
+    dtStart = datetime.datetime.now()
+    DataTypeValidation(sourceURL, targetURL, outputPath, args.sourceTable, args.targetTable, spark)
+    print(f'Time Taken for Datatype Validation:{str(datetime.datetime.now()-dtStart)}')
+    compStart = datetime.datetime.now()
+    compareData(sdf, tdf, outputPath, vars(args))
+    print(f'Time Taken for Data Validation:{str(datetime.datetime.now()-compStart)}')
 
 
     
