@@ -1,0 +1,7 @@
+Before removing duplicates 
+ Source Count: 14975 
+ Target Count: 14975 
+ After removing duplicates 
+ Source Count: 14975 
+ Target Count: 14975 
+ Count Validation Passes.

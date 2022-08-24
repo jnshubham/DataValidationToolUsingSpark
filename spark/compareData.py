@@ -9,17 +9,17 @@ import sys
 import pandas
 import datetime
 
-def setConfig():
+def setConfig(sourceTable):
     filePath = os.path.abspath(os.getcwd())
     if(sys.platform=='win32'):
         os.environ['HADOOP_HOME'] = filePath
         sys.path.append(filePath)
         driverPath = f'{filePath}\\bin\\mssql-jdbc-11.2.0.jre8.jar;:{filePath}\\bin\\mssql-jdbc_auth-11.2.0.x64.dll;'
-        outputPath = f'{filePath}\\output\\{int(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))}\\filename'
+        outputPath = f'{filePath}\\output\\{sourceTable}\\{int(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))}\\filename'
         os.makedirs(outputPath.replace('filename',''))
     else:
         driverPath = f'{filePath}/bin/mssql-jdbc-11.2.0.jre8.jar;:{filePath}/bin/mssql-jdbc_auth-11.2.0.x64.dll;'
-        outputPath = f'{filePath}/output/{int(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))}/filename'
+        outputPath = f'{filePath}/output/{sourceTable}/{int(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))}/filename'
         os.makedirs(outputPath.replace('comparisionType','countValidation').replace('filename',''))
     return driverPath, outputPath
 
@@ -131,16 +131,16 @@ def countValidation(sdf: DataFrame, tdf: DataFrame, outputPath: str):
     
     countResult = ''
     if(sourceCount==targetCount and source2Count==target2Count):
-        countResult = countResult + f'Before removing duplicates \n Source Count: {str(sourceCount)} \n Target Count: {str(targetCount)} \n After removing duplicates \n Source Count: {str(source2Count)} \n Target Count: {str(target2Count)} \n Count Validation Passes.'
+        countResult = countResult + f'Before removing duplicates \nSource Count: {str(sourceCount)} \nTarget Count: {str(targetCount)} \nAfter removing duplicates \nSource Count: {str(source2Count)} \nTarget Count: {str(target2Count)} \nCount Validation Passes.'
         outputPath = outputPath.replace('filename','countComparision_SUCCESS.txt')
     elif(sourceCount==targetCount):
-        countResult = countResult + f'Before removing duplicates \n Source Count: {str(sourceCount)} \n Target Count: {str(targetCount)} \n After removing duplicates \n Source Count: {str(source2Count)} \n Target Count: {str(target2Count)} \n Count Validation Failed.'
+        countResult = countResult + f'Before removing duplicates \nSource Count: {str(sourceCount)} \nTarget Count: {str(targetCount)} \nAfter removing duplicates \nSource Count: {str(source2Count)} \nTarget Count: {str(target2Count)} \nCount Validation Failed.'
         outputPath = outputPath.replace('filename','countComparision_FAILED.txt')
     elif(source2Count==target2Count):
-        countResult = countResult + f'Before removing duplicates \n Source Count: {str(sourceCount)} \n Target Count: {str(targetCount)} \n After removing duplicates \n Source Count: {str(source2Count)} \n Target Count: {str(target2Count)} \n Count Validation Failed but will continue further testing.'
+        countResult = countResult + f'Before removing duplicates \nSource Count: {str(sourceCount)} \nTarget Count: {str(targetCount)} \nAfter removing duplicates \nSource Count: {str(source2Count)} \nTarget Count: {str(target2Count)} \nCount Validation Failed but will continue further testing.'
         outputPath = outputPath.replace('filename','countComparision_FAILED.txt')
     else:
-        countResult = countResult + f'Before removing duplicates \n Source Count: {str(sourceCount)} \n Target Count: {str(targetCount)} \n After removing duplicates \n Source Count: {str(source2Count)} \n Target Count: {str(target2Count)} \n Count Validation Failed.'
+        countResult = countResult + f'Before removing duplicates \nSource Count: {str(sourceCount)} \nTarget Count: {str(targetCount)} \nAfter removing duplicates \nSource Count: {str(source2Count)} \nTarget Count: {str(target2Count)} \nCount Validation Failed.'
         outputPath = outputPath.replace('filename','countComparision_FAILED.txt')
     
     with open(outputPath,'w+') as t:
@@ -172,16 +172,15 @@ TABLE_NAME = '{1}'
         ((sDTdf['ORDINAL_POSITION']==tDTdf['ORDINAL_POSITION']) & (sDTdf['COLUMN_NAME']==tDTdf['COLUMN_NAME']) & (sDTdf['datatype']==tDTdf['datatype'])).alias('MatchResult'))
         
     if(fDTdf.filter(col('MatchResult')=='false').count()>=1):
-        saveDataPandas(fDTdf, outputPath.replace('filename','dataComparision_FAILED.csv'), index=False, header=True, mode='w+')
+        saveDataPandas(fDTdf, outputPath.replace('filename','dataTypeComparision_FAILED.csv'), index=False, header=True, mode='w+')
     else:
-        saveDataPandas(fDTdf, outputPath.replace('filename','dataComparision_SUCCESS.csv'), index=False, header=True, mode='w+')
+        saveDataPandas(fDTdf, outputPath.replace('filename','dataTypeComparision_SUCCESS.csv'), index=False, header=True, mode='w+')
         
         
 
 
 def main(args):
-    driverPath, outputPath = setConfig()
-    
+    driverPath, outputPath = setConfig(args.sourceTable)
     #Generate Local Spark Session
     spark = SparkSession \
         .builder \
