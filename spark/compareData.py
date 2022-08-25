@@ -168,7 +168,7 @@ TABLE_NAME = '{1}'
         .option("driver", 'com.microsoft.sqlserver.jdbc.SQLServerDriver').load()
         
     fDTdf = sDTdf.join(tDTdf, on='COLUMN_NAME', how='full').\
-        select(sDTdf['ORDINAL_POSITION'], tDTdf['ORDINAL_POSITION'], sDTdf['COLUMN_NAME'], tDTdf['COLUMN_NAME'], sDTdf['datatype'], tDTdf['datatype'],
+        select(sDTdf['COLUMN_NAME'].alias('columnName_pre'), tDTdf['COLUMN_NAME'].alias('columnName_post'), sDTdf['datatype'].alias('datatype_pre'), tDTdf['datatype'].alias('datatype_post'), sDTdf['ORDINAL_POSITION'].alias('ordinalPosition_pre'), tDTdf['ORDINAL_POSITION'].alias('ordinalPosition_post'),
         ((sDTdf['ORDINAL_POSITION']==tDTdf['ORDINAL_POSITION']) & (sDTdf['COLUMN_NAME']==tDTdf['COLUMN_NAME']) & (sDTdf['datatype']==tDTdf['datatype'])).alias('MatchResult'))
         
     if(fDTdf.filter(col('MatchResult')=='false').count()>=1):

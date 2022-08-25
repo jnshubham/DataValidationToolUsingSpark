@@ -29,8 +29,9 @@ def initializeValidation(kwargs):
         
     print(cmd)
     #os.system(cmd)
-    op = subprocess.run(cmd)
-    if(op.returncode!=0):
+    #op = subprocess.run(cmd)
+    if(False):
+    #if(op.returncode!=0):
         raise Error
     else:
         print('Success')
@@ -38,10 +39,10 @@ def initializeValidation(kwargs):
         
 def fetchData(kwargs):
     if(sys.platform=='win32'):
-        baseDirectory = "{kwargs['filepath']}\\output\\{kwargs['sourceTable']}\\"
+        baseDirectory = f"{kwargs['filePath']}\\output\\{kwargs['sourceTable']}\\"
         latestDirectory = max(glob.glob(os.path.join(baseDirectory, '*/')), key=os.path.getmtime)
     else:
-        baseDirectory = "{kwargs['filepath']}/output/{kwargs['sourceTable']}/"
+        baseDirectory = f"{kwargs['filePath']}/output/{kwargs['sourceTable']}/"
         latestDirectory = max(glob.glob(os.path.join(baseDirectory, '*/')), key=os.path.getmtime)
     
     # files = pathlib.Path(latestDirectory).glob('*')
@@ -60,28 +61,32 @@ def fetchData(kwargs):
     for filename in os.listdir(latestDirectory):
         if('datatypecomparision' in filename.lower()):
             datatypefilePath =  os.path.join(latestDirectory, filename)
-            if('_success' in datatypefilePath):
+            if('_success' in datatypefilePath.lower()):
                 datatypeFlag= 'SUCCESS'
             df = pd.read_csv(datatypefilePath)
             htmldf = df.to_html(index=False)
-            datatypeResult =  htmldf.replace('<table border="1" class="dataframe">','<table class="table table-bordered table-hover table-sm">').replace('<thead>','<thead class="thead-dark">').replace('<th>','<th scope="col">').replace('<tr style="text-align: right;">','')
+            datatypeResult =  htmldf.replace('<table border="1" class="dataframe">','<table class="table table-bordered table-hover table-sm">').replace('<thead>','<thead class="thead-light">').replace('<th>','<th scope="col">').replace('<tr style="text-align: right;">','')
             
         elif('datacomparision' in filename.lower()):
             datafilePath =  os.path.join(latestDirectory, filename)
-            if('_success' in datafilePath):
+            if('_success' in datafilePath.lower()):
                 dataFlag= 'SUCCESS'
             df = pd.read_csv(datafilePath)
-            htmldf = df.head(200).to_html(index=False)
-            dataResult =  htmldf.replace('<table border="1" class="dataframe">','<table class="table table-bordered table-hover table-sm">').replace('<thead>','<thead class="thead-dark">').replace('<th>','<th scope="col">').replace('<tr style="text-align: right;">','')
+            htmldf = df.groupby('ColumnName').head(int(2000/df.ColumnName.nunique(dropna = True)))
+            htmldf = htmldf.to_html(index=False)
+            dataResult =  htmldf.replace('<table border="1" class="dataframe">','<table id="tempdt" class="table table-bordered table-hover table-sm">').replace('<thead>','<thead class="thead-light">').replace('<tr style="text-align: right;">','')
+            dataResult = f'''<div align='left'><p><b>Executed By: </b>{os.getlogin()}</p><p><b>Filter: </b>{kwargs['filterCondition']}</p><p><b>Columns having differences: </b>{','.join(df.ColumnName.unique())}</p> {dataResult}</div> '''
             
         elif('countcomparision' in filename.lower()):
             countfilePath =  os.path.join(latestDirectory, filename)
-            if('_success' in countfilePath):
+            if('_success' in countfilePath.lower()):
                 countFlag= 'SUCCESS'
             with open(countfilePath,'r') as t:
-                countResult = t.readlines()
+                countResult = '\\n'.join(t.readlines())
         
     return countfilePath, countFlag, countResult, \
             datatypefilePath, datatypeFlag, datatypeResult, \
                 datafilePath, dataFlag, dataResult
      
+# args = fetchData(kwargs = {"filepath":"C:\\Users\\shujain8\\OneDrive - Publicis Groupe\\Documents\\GitHub\\DataValidationToolUsingSpark", "sourceTable":'config.calender'})
+# print(args)
