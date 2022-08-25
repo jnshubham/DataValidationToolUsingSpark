@@ -5,6 +5,9 @@
         <!--<link rel="stylesheet" type="text/css" href="{{url_for('static',filename='loader.css')}}" >-->
     </head>
     <body>
+        <input method="post" type="hidden" name="fileData" value="{{ filename }}" />
+        <input method="post" type="hidden" name="fileData" value="{{ filename }}" />
+        
         <nav class="navbar sticky-top navbar-light bg-light">
             <div class="container-fluid">
               <a class="navbar-brand" href="#">
@@ -20,8 +23,8 @@
                         <h5 class="card-header text-center">Count Comparision Result</h5>
                         <div class="card-body" align='center'>    
                             <p>{{countResult|safe}}   </p>
-                            {# <a href="{{url_for('download_results', filePath=countPath)}}" class="btn btn-primary">Download Result</a> #}
-                            <a href="{{url_for('validationInput')}}" class="btn btn-primary">Download Result</a>
+                            <a href="{{url_for('download_results', filePath=countfilePath )}}" class="btn btn-primary">Download Result</a>
+                            
                         </div>
                         <div class="card-footer text-muted" align='center'>{{countFlag|safe}}</div>
                     </div>
@@ -31,8 +34,8 @@
                         <h5 class="card-header text-center">Datatype Comparision Result</h5>
                         <div class="card-body table-responsive" align='center'>    
                             <p>{{datatypeResult|safe}}   </p>
-                            {# <a href="{{url_for('download_results', filePath=countPath)}}" class="btn btn-primary">Download Result</a> #}
-                            <a href="{{url_for('validationInput')}}" class="btn btn-primary">Download Result</a>
+                            <a href="{{ url_for('download_results', filePath=datatypefilePath) }}" class="btn btn-primary">Download Result</a>
+                            
                         </div>
                         <div class="card-footer text-muted" align='center'>{{datatypeFlag|safe}}</div>
                     </div>
@@ -44,8 +47,8 @@
                         <h5 class="card-header text-center">Data Comparision Result</h5>
                         <div class="card-body table-responsive" align='center'>    
                             <p>{{dataResult|safe}}   </p>
-                            {# <a href="{{url_for('download_results', filePath=countPath)}}" class="btn btn-primary">Download Result</a> #}
-                            <a href="{{url_for('validationInput')}}" class="btn btn-primary">Download Result</a>
+                            <a href="{{url_for('download_results', filePath=datafilePath)}}" class="btn btn-primary">Download Result</a>
+                            
                         </div>
                         <div class="card-footer text-muted" align='center'>{{dataFlag|safe}}</div>
                               
@@ -86,7 +89,7 @@
     <script>
         // Material Design example
         $(document).ready(function () {
-            $('#tempdt').DataTable();
+            $('#tempdt, #tempdt1').DataTable();
             
         });
     </script>

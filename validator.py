@@ -12,9 +12,9 @@ def initializeValidation(kwargs):
         
         if(kwargs['filterCondition']==''):
             #cmd = '''spark-submit "{filePath}\\spark\\compareData.py" --sourceURL '{sourceURL}' --targetURL '{targetURL}' --sourceUser '{sourceUser}' --targetUser '{targetUser}' --sourcePassword '{sourcePassword}' --targetPassword '{targetPassword}' --sourceDatabase '{sourceDatabase}' --targetDatabase '{targetDatabase}' --sourceTable '{sourceTable}' --targetTable '{targetTable}' --keyColumns '{keyColumns}' --excludedColumns '{excludedColumns}' --filterCondition '{filterCondition}' '''.format(**kwargs)
-            cmd = '''python "{filePath}\\spark\\compareData.py" --sourceURL '{sourceURL}' --targetURL '{targetURL}' --sourceUser '{sourceUser}' --targetUser '{targetUser}' --sourcePassword '{sourcePassword}' --targetPassword '{targetPassword}' --sourceDatabase '{sourceDatabase}' --targetDatabase '{targetDatabase}' --sourceTable '{sourceTable}' --targetTable '{targetTable}' --keyColumns '{keyColumns}' --excludedColumns '{excludedColumns}' '''.format(**kwargs)
+            cmd = '''python "{filePath}\\spark\\compareData.py" --sourceURL {sourceURL} --targetURL {targetURL} --sourceUser {sourceUser} --targetUser {targetUser} --sourcePassword {sourcePassword} --targetPassword {targetPassword} --sourceDatabase {sourceDatabase} --targetDatabase {targetDatabase} --sourceTable {sourceTable} --targetTable {targetTable} --keyColumns {keyColumns} --excludedColumns {excludedColumns} '''.format(**kwargs)
         else:
-            cmd = '''python "{filePath}\\spark\\compareData.py" --sourceURL '{sourceURL}' --targetURL '{targetURL}' --sourceUser '{sourceUser}' --targetUser '{targetUser}' --sourcePassword '{sourcePassword}' --targetPassword '{targetPassword}' --sourceDatabase '{sourceDatabase}' --targetDatabase '{targetDatabase}' --sourceTable '{sourceTable}' --targetTable '{targetTable}' --keyColumns '{keyColumns}' --excludedColumns '{excludedColumns}' --filterCondition '{filterCondition}' '''.format(**kwargs)
+            cmd = '''python "{filePath}\\spark\\compareData.py" --sourceURL {sourceURL} --targetURL {targetURL} --sourceUser {sourceUser} --targetUser {targetUser} --sourcePassword {sourcePassword} --targetPassword {targetPassword} --sourceDatabase {sourceDatabase} --targetDatabase {targetDatabase} --sourceTable {sourceTable} --targetTable {targetTable} --keyColumns {keyColumns} --excludedColumns {excludedColumns} --filterCondition "{filterCondition}" '''.format(**kwargs)
 
         
     else:
@@ -65,17 +65,18 @@ def fetchData(kwargs):
                 datatypeFlag= 'SUCCESS'
             df = pd.read_csv(datatypefilePath)
             htmldf = df.to_html(index=False)
-            datatypeResult =  htmldf.replace('<table border="1" class="dataframe">','<table class="table table-bordered table-hover table-sm">').replace('<thead>','<thead class="thead-light">').replace('<th>','<th scope="col">').replace('<tr style="text-align: right;">','')
+            datatypeResult =  htmldf.replace('<table border="1" class="dataframe">','<table id="tempdt1" class="table table-bordered table-hover table-sm">').replace('<thead>','<thead class="thead-light">').replace('<th>','<th scope="col">').replace('<tr style="text-align: right;">','')
             
         elif('datacomparision' in filename.lower()):
             datafilePath =  os.path.join(latestDirectory, filename)
             if('_success' in datafilePath.lower()):
                 dataFlag= 'SUCCESS'
             df = pd.read_csv(datafilePath)
-            htmldf = df.groupby('ColumnName').head(int(2000/df.ColumnName.nunique(dropna = True)))
-            htmldf = htmldf.to_html(index=False)
-            dataResult =  htmldf.replace('<table border="1" class="dataframe">','<table id="tempdt" class="table table-bordered table-hover table-sm">').replace('<thead>','<thead class="thead-light">').replace('<tr style="text-align: right;">','')
-            dataResult = f'''<div align='left'><p><b>Executed By: </b>{os.getlogin()}</p><p><b>Filter: </b>{kwargs['filterCondition']}</p><p><b>Columns having differences: </b>{','.join(df.ColumnName.unique())}</p> {dataResult}</div> '''
+            if(len(df)>0):
+                htmldf = df.groupby('ColumnName').head(int(2000/df.ColumnName.nunique(dropna = True)))
+                htmldf = htmldf.to_html(index=False)
+                dataResult =  htmldf.replace('<table border="1" class="dataframe">','<table id="tempdt" class="table table-bordered table-hover table-sm">').replace('<thead>','<thead class="thead-light">').replace('<tr style="text-align: right;">','')
+                dataResult = f'''<div align='left'><p><b>Executed By: </b>{os.getlogin()}</p><p><b>Filter: </b>{kwargs['filterCondition']}</p><p><b>Columns having differences: </b>{','.join(df.ColumnName.unique())}</p> {dataResult}</div> '''
             
         elif('countcomparision' in filename.lower()):
             countfilePath =  os.path.join(latestDirectory, filename)

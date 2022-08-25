@@ -25,6 +25,8 @@ def setConfig(sourceTable):
 
 
 def getData(url: str, table: str, spark: SparkSession, filterCondition: str) -> DataFrame:
+    print(url)
+    print(table)
     df = spark.read.format("jdbc") \
         .option("url", url) \
         .option("dbtable", table) \
@@ -44,6 +46,8 @@ def saveDataPandas(df: DataFrame, path: str, **kwargs):
     pdf.to_csv(path, **kwargs)
 
 def compareData(sdf: DataFrame, tdf: DataFrame, outputPath: str, args: dict) -> DataFrame:
+    sdf = sdf.dropDuplicates()
+    tdf = tdf.dropDuplicates()
     eColumns = list(map(lambda x: x.strip(), args['excludedColumns'].split(',')))
     kColumns = list(map(lambda x: x.strip(),args['keyColumns'].split(',')))
     rColumns = [col for col in sdf.columns if col not in eColumns]

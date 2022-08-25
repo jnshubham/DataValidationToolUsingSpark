@@ -1,5 +1,5 @@
-from flask import Flask, render_template, url_for, request, make_response, session
-import os
+from flask import Flask, render_template, url_for, request, make_response, session, send_file
+import os, sys
 import datetime
 from validator import initializeValidation
 
@@ -32,6 +32,23 @@ def validationOutput():
                            dataResult=dataResult, dataFlag=dataFlag, datafilePath=datafilePath, 
                            )
 
+
+@app.route('/download/<filePath>', methods=['GET', 'POST'])
+def download_results(filePath):
+    if(sys.platform=='win32'):
+        fileName = filePath.rsplit('\\',1)[1]
+    else:
+        fileName = filePath.rsplit('/',1)[1]
+        
+    print(filePath)
+    print(fileName)
+    return send_file(
+        filePath,
+        mimetype='text/csv',
+        attachment_filename=fileName,
+        as_attachment=True
+    )
+    
 if __name__=='__main__':
     import pandas as pd
     app.run(debug=True, host='127.0.0.1', port=5000)
