@@ -1,4 +1,4 @@
-pyspark>=3.2.2
+pyspark
 flask
 pandas
 gunicorn

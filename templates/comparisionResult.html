@@ -1,0 +1,98 @@
+<html>
+    <head>
+        <title>Data Validation using spark on local</title>
+        <link rel="stylesheet" type="text/css" href="{{url_for('static',filename='bootstrap-material-design.css')}}" >
+        <!--<link rel="stylesheet" type="text/css" href="{{url_for('static',filename='loader.css')}}" >-->
+    </head>
+    <body>
+        <input method="post" type="hidden" name="fileData" value="{{ filename }}" />
+        <input method="post" type="hidden" name="fileData" value="{{ filename }}" />
+        
+        <nav class="navbar sticky-top navbar-light bg-light">
+            <div class="container-fluid">
+              <a class="navbar-brand" href="#">
+                Data Comparision Results ⚡️
+              </a>
+            </div>
+          </nav>
+          <br>
+        <div class="container">          
+            <div class="row">
+                <div class="col-sm-4">
+                    <div class="card border border-success shadow-0 mb-3">
+                        <h5 class="card-header text-center">Count Comparision Result</h5>
+                        <div class="card-body" align='center'>    
+                            <p>{{countResult|safe}}   </p>
+                            <a href="{{url_for('download_results', filePath=countfilePath )}}" class="btn btn-primary">Download Result</a>
+                            
+                        </div>
+                        <div class="card-footer text-muted" align='center'>{{countFlag|safe}}</div>
+                    </div>
+                </div>
+                <div class="col-sm-8">
+                    <div class="card border border-success shadow-0 mb-3">
+                        <h5 class="card-header text-center">Datatype Comparision Result</h5>
+                        <div class="card-body table-responsive" align='center'>    
+                            <p>{{datatypeResult|safe}}   </p>
+                            <a href="{{ url_for('download_results', filePath=datatypefilePath) }}" class="btn btn-primary">Download Result</a>
+                            
+                        </div>
+                        <div class="card-footer text-muted" align='center'>{{datatypeFlag|safe}}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="card border border-success shadow-0 mb-3">
+                        <h5 class="card-header text-center">Data Comparision Result</h5>
+                        <div class="card-body table-responsive" align='center'>    
+                            <p>{{dataResult|safe}}   </p>
+                            <a href="{{url_for('download_results', filePath=datafilePath)}}" class="btn btn-primary">Download Result</a>
+                            
+                        </div>
+                        <div class="card-footer text-muted" align='center'>{{dataFlag|safe}}</div>
+                              
+                            
+                                  
+                        </div>
+                    </div>
+                </div>
+            </div>
+                    
+
+                
+            
+            
+        </div>
+        <footer class="bg-light text-center text-lg-start">
+            <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.2);">
+                Made with ❤️ by Shubham Jain
+            </div>
+          </footer>
+       
+       
+    
+       
+    <script src="{{url_for('static',filename='jquery-3.2.1.slim.min.js')}}"></script>
+    <script src="{{url_for('static',filename='popper.js')}}"></script>   
+    <script src="{{url_for('static',filename='bootstrap-material-design.js')}}"></script>
+    <script type="text/javascript" src="{{url_for('static',filename='jquery-3.5.1.js')}}"></script>
+    <script type="text/javascript" src="{{url_for('static',filename='jquery.dataTables.min.js')}}"></script>
+    <script type="text/javascript" src="{{url_for('static',filename='dataTables.bootstrap4.min.js')}}"></script>
+    
+    <script>$(document).ready(function() { $('body').bootstrapMaterialDesign(); });</script>
+    <script>
+        $("#form_submit").submit(function(event) {
+            $("#submit").prop('disabled',true)
+        })
+    </script>
+    <script>
+        // Material Design example
+        $(document).ready(function () {
+            $('#tempdt, #tempdt1').DataTable();
+            
+        });
+    </script>
+
+    </body>
+</html>
