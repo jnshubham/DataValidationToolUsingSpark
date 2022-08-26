@@ -30,9 +30,9 @@ def initializeValidation(kwargs):
         
     print(cmd)
     #os.system(cmd)
-    #op = subprocess.run(cmd)
-    if(False):
-    #if(op.returncode!=0):
+    op = subprocess.run(cmd)
+    #if(False):
+    if(op.returncode!=0):
         raise Error
     else:
         print('Success')
