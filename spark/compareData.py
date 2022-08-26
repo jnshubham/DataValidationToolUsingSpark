@@ -235,7 +235,7 @@ def getArgs():
     parser.add_argument('-a','--sourceTable',help='Contains Source Table')
     parser.add_argument('-b','--targetTable',help='Contains Target Table')
     parser.add_argument('-k','--keyColumns',help='Contains Key Columns')
-    parser.add_argument('-e','--excludedColumns',help='Contains Columns To Exclude')
+    parser.add_argument('-e','--excludedColumns',help='Contains Columns To Exclude', default='abracadabra')
     parser.add_argument('-l','--filterCondition',help='Filter Condition', default=False)
     args = parser.parse_args()
     return args
