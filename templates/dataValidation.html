@@ -25,7 +25,7 @@
                                     <div class="col">
                                         <div class="form-group">
                                             <label for="sourceURL" class="bmd-label-floating">Source URL:</label>    
-                                            <input type="text" class="form-control" id="sourceURL"  name="sourceURL" value="" required>
+                                            <input type="text" class="form-control" id="sourceURL"  name="sourceURL" value={{surl}} required>
                                             <span class="bmd-help">servername.database.windows.net</span>
                                         </div>
                                     </div>
@@ -35,13 +35,13 @@
                                     <div class="col">
                                         <div class="form-group">
                                             <label for="sourceUser" class="bmd-label-floating">Username:</label>
-                                            <input class="form-control" id="sourceUser" name="sourceUser" type="text" value="" required>
+                                            <input class="form-control" id="sourceUser" name="sourceUser" type="text" value={{suser}} required>
                                         </div>
                                     </div>
                                     <div class="col">
                                         <div class="form-group">
                                             <label for="sourcePassword" class="bmd-label-floating">Password:</label>
-                                            <input class="form-control" id="sourcePassword" name="sourcePassword" type="password" value="" required>
+                                            <input class="form-control" id="sourcePassword" name="sourcePassword" type="password" value={{spwd}} required>
                                         </div>
                                     </div>
                                 </div>
@@ -49,7 +49,7 @@
                                     <div class="col">
                                         <div class="form-group">
                                             <label for="sourceDatabase" class="bmd-label-floating">Source Database:</label>
-                                            <input class="form-control" id="sourceDatabase" name="sourceDatabase" type="text" value="" required>
+                                            <input class="form-control" id="sourceDatabase" name="sourceDatabase" type="text" value={{sdb}} required>
                                             <span class="bmd-help">Source Database Name</span>
                                         </div>
                                     </div>
@@ -72,7 +72,7 @@
                                     <div class="col">
                                         <div class="form-group">
                                             <label for="targetURL" class="bmd-label-floating">Target URL:</label>    
-                                            <input type="text" class="form-control" id="targetURL"  name="targetURL" value="" required>
+                                            <input type="text" class="form-control" id="targetURL"  name="targetURL" value={{turl}} required>
                                             <span class="bmd-help">servername.database.windows.net</span>
                                         </div>
                                     </div>
@@ -82,13 +82,13 @@
                                     <div class="col">
                                         <div class="form-group">
                                             <label for="targetUser" class="bmd-label-floating">Username:</label>
-                                            <input class="form-control" id="targetUser" name="targetUser" type="text" value="" required>
+                                            <input class="form-control" id="targetUser" name="targetUser" type="text" value={{tuser}} required>
                                         </div>
                                     </div>
                                     <div class="col">
                                         <div class="form-group">
                                             <label for="targetPassword" class="bmd-label-floating">Password:</label>
-                                            <input class="form-control" id="targetPassword" name="targetPassword" type="password" value="" required>
+                                            <input class="form-control" id="targetPassword" name="targetPassword" type="password" value={{tpwd}} required>
                                         </div>
                                     </div>
                                 </div>
@@ -96,7 +96,7 @@
                                     <div class="col">
                                         <div class="form-group">
                                             <label for="targetDatabase" class="bmd-label-floating">Target Database:</label>
-                                            <input class="form-control" id="targetDatabase" name="targetDatabase" type="text" value="" required>
+                                            <input class="form-control" id="targetDatabase" name="targetDatabase" type="text" value={{tdb}} required>
                                             <span class="bmd-help">Target Database Name</span>
                                         </div>
                                     </div>

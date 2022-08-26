@@ -1,4 +1,0 @@
-import subprocess
-cmd = '''c:\\users\\yfcb\\appdata\\roaming\\python\\python310\\site-packages\\pyspark\\bin\\spark-submit C:\\DataValidation\\spark\\compareData.py --sourceURL 'cashappcredit-dev2-cvx.database.windows.net' --targetURL 'cashappcredit-dev2-cvx.database.windows.net' --sourceUser 'dbadmin-cashappcredit-dev2' --targetUser 'dbadmin-cashappcredit-dev2' --sourcePassword 'b6sJkWzqYBnXT1kvXeHtwQuCbCBQSsc9' --targetPassword 'b6sJkWzqYBnXT1kvXeHtwQuCbCBQSsc9' --sourceDatabase 'cashappcredit-dev2-cvx' --targetDatabase 'cashappcredit-dev2-cvx' --sourceTable 'config.calender' --targetTable 'config.calender' --keyColumns 'CalenderDate' --excludedColumns 'm' '''
-op = subprocess.run(cmd)
-print(op.returncode)
