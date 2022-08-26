@@ -1,7 +1,7 @@
 from flask import Flask, render_template, url_for, request, make_response, session, send_file
 import os, sys
 import datetime
-from validator import initializeValidation
+from validator import initializeValidation, getConfigs
 
 app = Flask(__name__)
 app.config['SECRET_KEY']='089bcc9bf633533dd60b6f19402d1634'
@@ -9,7 +9,9 @@ app.config['SECRET_KEY']='089bcc9bf633533dd60b6f19402d1634'
 
 @app.route('/')
 def validationInput():
-    return render_template('dataValidation.html')
+    surl, suser, spwd, sdb, turl, tuser, tpwd, tdb = getConfigs()
+    return render_template('dataValidation.html', surl = surl, suser = suser, spwd = spwd, sdb = sdb, 
+                           turl = turl, tuser = tuser, tpwd = tpwd, tdb = tdb)
 
 @app.route('/ValidationOP', methods=['GET', 'POST'])
 def validationOutput():

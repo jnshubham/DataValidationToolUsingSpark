@@ -1,3 +1,4 @@
+import configparser
 from msilib.schema import Error
 import subprocess, os, sys, glob, pathlib
 import pandas as pd
@@ -91,3 +92,11 @@ def fetchData(kwargs):
      
 # args = fetchData(kwargs = {"filepath":"C:\\Users\\shujain8\\OneDrive - Publicis Groupe\\Documents\\GitHub\\DataValidationToolUsingSpark", "sourceTable":'config.calender'})
 # print(args)
+
+def getConfigs():
+    configs = configparser.ConfigParser()
+    configs.read('config/db.config.ini')
+    surl, suser, spwd, sdb = configs['sourceDatabase']['url'], configs['sourceDatabase']['username'], configs['sourceDatabase']['password'], configs['sourceDatabase']['database']
+    turl, tuser, tpwd, tdb = configs['targetDatabase']['url'], configs['targetDatabase']['username'], configs['targetDatabase']['password'], configs['targetDatabase']['database']
+    return surl, suser, spwd, sdb, turl, tuser, tpwd,tdb
+
