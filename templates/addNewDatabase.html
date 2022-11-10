@@ -1,0 +1,100 @@
+<html>
+    <head>
+        <title>Data Validation using spark on local</title>
+        <link rel="stylesheet" type="text/css" href="{{url_for('static',filename='bootstrap-material-design.css')}}" >
+        <!--<link rel="stylesheet" type="text/css" href="{{url_for('static',filename='loader.css')}}" >-->
+    </head>
+    <body>        
+        <nav class="navbar sticky-top navbar-light bg-light">
+            <div class="container-fluid">
+              <a class="navbar-brand" href="/">
+                Data Validation Framework using Spark ⚡️
+              </a>
+            </div>
+        </nav>
+          <br>
+        <div id="content" class="col" >
+            <form method="POST" action="{{url_for('addDatabaseDriver')}}" id="form_submit" enctype="multipart/form-data">    
+                <div class="row">
+                    <div class="col-sm-6" >
+                        <div class="card border border-success shadow-0 mb-3">
+                            <h5 class="card-header">Add Database properties</h5>
+                            <div class="card-body">                            
+                                {% if error|length>1 %}
+                                    <p color='red'>{{error}}</p>
+                                {% endif %}
+                                <div class="form-group">
+                                    <label for="dbName" class="bmd-label-floating">Database Name:</label>    
+                                    <input type="text" class="form-control" id="dbName"  name="dbName" required>
+                                    <span class="bmd-help">mysql, sqlserver, oracle, postgres</span>
+                                </div>
+                            
+                        
+                                <div class="form-group">
+                                    <label for="dbDriver" class="bmd-label-floating">Driver class Name:</label>    
+                                    <input type="text" class="form-control" id="dbDriver"  name="dbDriver" required>
+                                    <span class="bmd-help">com.mysql.jdbc.Driver</span>
+                                </div>
+                        
+                            
+                                <div class="form-group">
+                                    <label for="dbURL" class="bmd-label-floating">DB URL Format:</label>    
+                                    <input type="text" class="form-control" id="dbURL"  name="dbURL" required>
+                                    <span class="bmd-help">jdbc:mysql://{uri}/{db}?user={usr}&password={pwd}</span>
+                                
+                                </div>
+                            
+                                <div class="form-group">
+                                    <label for="dbJar" class="bmd-label-floating">Driver:</label>    
+                                    <input type="file" onchange="return fileValidation()" class="form-control" id="dbJar"  name="dbJar" required>
+                                    <span class="bmd-help">.jar file type</span>
+                                
+                                </div>
+                            
+                                <div class="col d-flex justify-content-center">
+                                    <div class="form-group">
+                                        <input class="btn btn-raised btn-primary" id="submit" name="submit"  type="submit" value="submit">
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+          
+        <footer class="bg-light text-center text-lg-start">
+            <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.2);">
+                Made with ❤️ by Shubham Jain
+            </div>
+          </footer>
+       
+       
+    
+       
+    <script src="{{url_for('static',filename='jquery-3.2.1.slim.min.js')}}"></script>
+    <script src="{{url_for('static',filename='popper.js')}}"></script>   
+    <script src="{{url_for('static',filename='bootstrap-material-design.js')}}"></script>
+    <script>$(document).ready(function() { $('body').bootstrapMaterialDesign(); });</script>
+    <script>
+        $("#form_submit").submit(function(event) {
+            $("#submit").prop('disabled',true)
+        })
+    </script>
+    <script>
+        function fileValidation() {
+            var fileInput =document.getElementById('dbJar');
+            var filePath = fileInput.value;
+            var allowedExtensions = /(\.jar)$/i;
+             if (!allowedExtensions.exec(filePath)) {
+                alert('Invalid file type only jar file supported');
+                fileInput.value = '';
+                return false;
+            }
+        }
+    </script>
+       
+
+    </body>
+</html>

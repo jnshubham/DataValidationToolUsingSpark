@@ -1,50 +1,76 @@
 import configparser
-from msilib.schema import Error
 import subprocess, os, sys, glob, pathlib
 import pandas as pd
+import psutil
+
+class SparkCommandSyntaxError(Exception):
+    '''This is invoked when there is syntax error in spark command'''
+    pass
+
+def getAvailableMemory():
+    mem = psutil.virtual_memory()
+    availableMemory = mem.available/1024.0/1024.0/1024.0
+    memForSpark = availableMemory - 1
+    return str(int(memForSpark))+'g'
+    
+    
+    
+def getURLFromConfig(kw):
+    configDriver = configparser.ConfigParser()
+    configDriver.read('config/driver.config.ini')
+    
+    #Generating Source URL
+    sourceDriverClassName = configDriver[kw['sdriver']]['driver']
+    print(sourceDriverClassName)
+    url = configDriver[kw['sdriver']]['url']
+    print(url)
+    sourceURL = url.format(**{'uri': kw['sourceURL'],
+                            'db': kw['sourceDatabase'],
+                            'usr': kw['sourceUser'],
+                            'pwd': kw['sourcePassword']})
+    
+    #Generating Target URL
+    targetDriverClassName = configDriver[kw['tdriver']]['driver']
+    url = configDriver[kw['tdriver']]['url']
+    targetURL = url.format(**{'uri': kw['targetURL'],
+                            'db': kw['targetDatabase'],
+                            'usr': kw['targetUser'],
+                            'pwd': kw['targetPassword']})
+    configDriver.clear()
+    return sourceDriverClassName, sourceURL, targetDriverClassName, targetURL
+    
+    
 
 def initializeValidation(kwargs):
     kwargs['filePath'] = os.path.abspath(os.getcwd())
-    memory = '60g'
-    
-    if(sys.platform=='win32'):
-        kwargs['driverPath'] = f'''{kwargs['filePath']}\\bin\\mssql-jdbc-11.2.0.jre8.jar;{kwargs['filePath']}\\bin\\mssql-jdbc_auth-11.2.0.x64.dll;'''
-        kwargs['conf'] = f'''--conf spark.driver.extraClassPath="{kwargs["driverPath"]}" --conf spark.driver.memory='{memory}' '''
-        
-        if(kwargs['filterCondition']==''):
-            #cmd = '''spark-submit "{filePath}\\spark\\compareData.py" --sourceURL '{sourceURL}' --targetURL '{targetURL}' --sourceUser '{sourceUser}' --targetUser '{targetUser}' --sourcePassword '{sourcePassword}' --targetPassword '{targetPassword}' --sourceDatabase '{sourceDatabase}' --targetDatabase '{targetDatabase}' --sourceTable '{sourceTable}' --targetTable '{targetTable}' --keyColumns '{keyColumns}' --excludedColumns '{excludedColumns}' --filterCondition '{filterCondition}' '''.format(**kwargs)
-            cmd = '''python "{filePath}\\spark\\compareData.py" --sourceURL {sourceURL} --targetURL {targetURL} --sourceUser {sourceUser} --targetUser {targetUser} --sourcePassword {sourcePassword} --targetPassword {targetPassword} --sourceDatabase {sourceDatabase} --targetDatabase {targetDatabase} --sourceTable {sourceTable} --targetTable {targetTable} --keyColumns {keyColumns} --excludedColumns {excludedColumns} '''.format(**kwargs)
-        else:
-            cmd = '''python "{filePath}\\spark\\compareData.py" --sourceURL {sourceURL} --targetURL {targetURL} --sourceUser {sourceUser} --targetUser {targetUser} --sourcePassword {sourcePassword} --targetPassword {targetPassword} --sourceDatabase {sourceDatabase} --targetDatabase {targetDatabase} --sourceTable {sourceTable} --targetTable {targetTable} --keyColumns {keyColumns} --excludedColumns {excludedColumns} --filterCondition "{filterCondition}" '''.format(**kwargs)
+    memory = getAvailableMemory()
+    kwargs['driverPath'] = os.path.join(kwargs['filePath'],'bin','*;')
+    kwargs['conf'] = f'''--conf spark.driver.extraClassPath="{kwargs["driverPath"]}" --conf spark.driver.memory='{memory}' '''
+    kwargs['scriptPath'] = os.path.join(kwargs['filePath'],'spark','compareData.py')
 
-        
+    kwargs['sourceDriver'], kwargs['sourceURL'], kwargs['targetDriver'], kwargs['targetURL'] = getURLFromConfig(kwargs)
+    if('steps' not in kwargs.keys()):
+        kwargs['steps'] = 1
+    if(kwargs['filterCondition']==''):
+        #cmd = '''spark-submit "{filePath}\\spark\\compareData.py" --sourceURL '{sourceURL}' --targetURL '{targetURL}' --sourceUser '{sourceUser}' --targetUser '{targetUser}' --sourcePassword '{sourcePassword}' --targetPassword '{targetPassword}' --sourceDatabase '{sourceDatabase}' --targetDatabase '{targetDatabase}' --sourceTable '{sourceTable}' --targetTable '{targetTable}' --keyColumns '{keyColumns}' --excludedColumns '{excludedColumns}' --filterCondition '{filterCondition}' '''.format(**kwargs)
+        #cmd = '''python "{scriptPath}" --sourceURL {sourceURL} --targetURL {targetURL} --sourceUser {sourceUser} --targetUser {targetUser} --sourcePassword {sourcePassword} --targetPassword {targetPassword} --sourceDatabase {sourceDatabase} --targetDatabase {targetDatabase} --sourceTable {sourceTable} --targetTable {targetTable} --keyColumns {keyColumns} --driver {driver} --excludedColumns {excludedColumns} '''.format(**kwargs)
+        cmd = '''python "{scriptPath}" --sourceURL {sourceURL} --targetURL {targetURL} --sourceDriver {sourceDriver} --targetDriver {targetDriver} --sourceTable {sourceTable} --targetTable {targetTable} --steps {steps} --keyColumns "{keyColumns}" --excludedColumns "{excludedColumns}" '''.format(**kwargs)
     else:
-        kwargs['driverPath'] = f'''{kwargs['filePath']}/bin/mssql-jdbc-11.2.0.jre8.jar:{kwargs['filePath']}/bin/mssql-jdbc_auth-11.2.0.x64.dll'''
-        kwargs['conf'] = f'''--conf spark.driver.extraClassPath={kwargs['driverPath']} --conf spark.driver.memory={memory} '''
-        
-        if(kwargs['filterCondition']==''):
-            cmd = '''spark-submit {conf} '{filePath}/spark/compareData.py' --sourceURL '{sourceURL}' --targetURL '{targetURL}' --sourceUser '{sourceUser}' --targetUser '{targetUser}' --sourcePassword '{sourcePassword}' --targetPassword '{targetPassword}' --sourceDatabase '{sourceDatabase}' --targetDatabase '{targetDatabase}' --sourceTable '{sourceTable}' --targetTable '{targetTable}' --keyColumns '{keyColumns}' --excludedColumns '{excludedColumns}' '''.format(**kwargs)
-            #cmd = '''python "{filePath}\\spark\\compareData.py" --sourceURL '{sourceURL}' --targetURL '{targetURL}' --sourceUser '{sourceUser}' --targetUser '{targetUser}' --sourcePassword '{sourcePassword}' --targetPassword '{targetPassword}' --sourceDatabase '{sourceDatabase}' --targetDatabase '{targetDatabase}' --sourceTable '{sourceTable}' --targetTable '{targetTable}' --keyColumns '{keyColumns}' --excludedColumns '{excludedColumns}' --filterCondition '{filterCondition}' '''.format(**kwargs)
-        else:
-            cmd = '''spark-submit {conf} '{filePath}/spark/compareData.py' --sourceURL '{sourceURL}' --targetURL '{targetURL}' --sourceUser '{sourceUser}' --targetUser '{targetUser}' --sourcePassword '{sourcePassword}' --targetPassword '{targetPassword}' --sourceDatabase '{sourceDatabase}' --targetDatabase '{targetDatabase}' --sourceTable '{sourceTable}' --targetTable '{targetTable}' --keyColumns '{keyColumns}' --excludedColumns '{excludedColumns}' --filterCondition '{filterCondition}' '''.format(**kwargs)        
+        #cmd = '''python "{scriptPath}" --sourceURL {sourceURL} --targetURL {targetURL} --sourceUser {sourceUser} --targetUser {targetUser} --sourcePassword {sourcePassword} --targetPassword {targetPassword} --sourceDatabase {sourceDatabase} --targetDatabase {targetDatabase} --sourceTable {sourceTable} --targetTable {targetTable} --keyColumns {keyColumns} --driver {driver} --excludedColumns {excludedColumns} --filterCondition "{filterCondition}" '''.format(**kwargs)
+        cmd = '''python "{scriptPath}" --sourceURL {sourceURL} --targetURL {targetURL} --sourceDriver {sourceDriver} --targetDriver {targetDriver} --sourceTable {sourceTable} --targetTable {targetTable} --steps {steps} --keyColumns "{keyColumns}" --excludedColumns "{excludedColumns}" --filterCondition "{filterCondition}" '''.format(**kwargs)
         
     print(cmd)
-    #os.system(cmd)
     op = subprocess.run(cmd)
-    #if(False):
+
     if(op.returncode!=0):
-        raise Error
+        raise SparkCommandSyntaxError(cmd)
     else:
         print('Success')
         return fetchData(kwargs)
         
 def fetchData(kwargs):
-    if(sys.platform=='win32'):
-        baseDirectory = f"{kwargs['filePath']}\\output\\{kwargs['sourceTable']}\\"
-        latestDirectory = max(glob.glob(os.path.join(baseDirectory, '*/')), key=os.path.getmtime)
-    else:
-        baseDirectory = f"{kwargs['filePath']}/output/{kwargs['sourceTable']}/"
-        latestDirectory = max(glob.glob(os.path.join(baseDirectory, '*/')), key=os.path.getmtime)
+    baseDirectory = os.path.join(kwargs['filePath'], 'output',kwargs['sourceTable'])
+    latestDirectory = max(glob.glob(os.path.join(baseDirectory, '*/')), key=os.path.getmtime)
     
     # files = pathlib.Path(latestDirectory).glob('*')
     # for file in files:
@@ -98,5 +124,26 @@ def getConfigs():
     configs.read('config/db.config.ini')
     surl, suser, spwd, sdb = configs['sourceDatabase']['url'], configs['sourceDatabase']['username'], configs['sourceDatabase']['password'], configs['sourceDatabase']['database']
     turl, tuser, tpwd, tdb = configs['targetDatabase']['url'], configs['targetDatabase']['username'], configs['targetDatabase']['password'], configs['targetDatabase']['database']
-    return surl, suser, spwd, sdb, turl, tuser, tpwd,tdb
+    configDriver = configparser.ConfigParser()
+    configDriver.read('config/driver.config.ini')
+    dbs = configDriver.sections()
+    configs.clear()
+    configDriver.clear()
+    return surl, suser, spwd, sdb, turl, tuser, tpwd, tdb, dbs
+
+def addDriver(request):
+    configDriver = configparser.ConfigParser()
+    configDriver.read('config/driver.config.ini')
+    if(request['dbName'] in configDriver.sections()):
+        return f"Driver already exist for {request['dbName']}"
+    else:
+        configDriver.add_section(request['dbName'])
+        configDriver.set(request['dbName'], 'driver', request['dbDriver'])
+        configDriver.set(request['dbName'], 'url', request['dbURL'])
+        
+        with open('config/driver.config.ini', 'w') as configfile:
+            configDriver.write(configfile)
+
+        configDriver.clear()
+        return 'Success'
 

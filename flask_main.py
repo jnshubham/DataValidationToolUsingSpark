@@ -1,7 +1,7 @@
 from flask import Flask, render_template, url_for, request, make_response, session, send_file
 import os, sys
 import datetime
-from validator import initializeValidation, getConfigs
+from validator import initializeValidation, getConfigs, addDriver
 
 app = Flask(__name__)
 app.config['SECRET_KEY']='089bcc9bf633533dd60b6f19402d1634'
@@ -9,9 +9,10 @@ app.config['SECRET_KEY']='089bcc9bf633533dd60b6f19402d1634'
 
 @app.route('/')
 def validationInput():
-    surl, suser, spwd, sdb, turl, tuser, tpwd, tdb = getConfigs()
+    surl, suser, spwd, sdb, turl, tuser, tpwd, tdb, dbs = getConfigs()
+    
     return render_template('dataValidation.html', surl = surl, suser = suser, spwd = spwd, sdb = sdb, 
-                           turl = turl, tuser = tuser, tpwd = tpwd, tdb = tdb)
+                           turl = turl, tuser = tuser, tpwd = tpwd, tdb = tdb, dbs = dbs)
 
 @app.route('/ValidationOP', methods=['GET', 'POST'])
 def validationOutput():
@@ -37,20 +38,28 @@ def validationOutput():
 
 @app.route('/download/<filePath>', methods=['GET', 'POST'])
 def download_results(filePath):
-    if(sys.platform=='win32'):
-        fileName = filePath.rsplit('\\',1)[1]
-    else:
-        fileName = filePath.rsplit('/',1)[1]
-        
     print(filePath)
-    print(fileName)
     return send_file(
         filePath,
         mimetype='text/csv',
-        attachment_filename=fileName,
         as_attachment=True
     )
     
+@app.route('/addDB')
+def addDBPage():
+    return render_template('addNewDatabase.html')
+    
+@app.route('/addDriver', methods = ['GET', 'POST'])
+def addDatabaseDriver():
+    op = addDriver(request.form.to_dict())
+    if(op=='Success'):
+        f = request.files['dbJar']
+        path = os.path.join('lib',f.filename)
+        f.save(os.path.join('lib',f.filename))
+        return validationInput()
+    else:
+        return render_template('addNewDatabase.html', error=op)
+    
 if __name__=='__main__':
     import pandas as pd
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=80)

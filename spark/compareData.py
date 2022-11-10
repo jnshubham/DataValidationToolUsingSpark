@@ -1,5 +1,4 @@
 import argparse
-from tkinter import N
 from pyspark.sql.session import SparkSession
 from pyspark.sql import Window
 from pyspark.sql.functions import row_number, coalesce, lit, when, concat_ws, col
@@ -11,26 +10,21 @@ import datetime
 
 def setConfig(sourceTable):
     filePath = os.path.abspath(os.getcwd())
-    if(sys.platform=='win32'):
-        os.environ['HADOOP_HOME'] = filePath
-        sys.path.append(filePath)
-        driverPath = f'{filePath}\\bin\\mssql-jdbc-11.2.0.jre8.jar;:{filePath}\\bin\\mssql-jdbc_auth-11.2.0.x64.dll;'
-        outputPath = f'{filePath}\\output\\{sourceTable}\\{int(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))}\\filename'
-        os.makedirs(outputPath.replace('filename',''))
-    else:
-        driverPath = f'{filePath}/bin/mssql-jdbc-11.2.0.jre8.jar;:{filePath}/bin/mssql-jdbc_auth-11.2.0.x64.dll;'
-        outputPath = f'{filePath}/output/{sourceTable}/{int(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))}/filename'
-        os.makedirs(outputPath.replace('comparisionType','countValidation').replace('filename',''))
+    os.environ['HADOOP_HOME'] = filePath
+    sys.path.append(filePath)
+    driverPath = os.path.join(filePath, 'lib','*;')
+    outputPath = os.path.join(filePath, 'output', sourceTable, f'{int(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))}','filename')
+    os.makedirs(outputPath.replace('filename',''))
     return driverPath, outputPath
 
 
-def getData(url: str, table: str, spark: SparkSession, filterCondition: str) -> DataFrame:
+def getData(url: str, table: str, spark: SparkSession, filterCondition: str, driver: str) -> DataFrame:
     print(url)
     print(table)
     df = spark.read.format("jdbc") \
         .option("url", url) \
         .option("dbtable", table) \
-        .option("driver", 'com.microsoft.sqlserver.jdbc.SQLServerDriver').load()
+        .option("driver", driver).load()
     if(filterCondition):
         df.createOrReplaceTempView('table')
         df = spark.sql(f'select * from table where {filterCondition}')
@@ -81,7 +75,7 @@ def compareData(sdf: DataFrame, tdf: DataFrame, outputPath: str, args: dict) -> 
             col(clm+'_pre').cast('string').alias('pre'),
             col(clm+'_post').cast('string').alias('post'),
             when(col(clm+'_pre').cast('int').isNotNull() & col(clm+'_post').cast('int').isNotNull(),\
-                 col(clm+'_pre')-col(clm+'_post')).otherwise(lit('Differences found')).alias('Comments')
+                 (col(clm+'_pre')-col(clm+'_post')).cast('string')).otherwise(lit('Differences found')).alias('Comments')
             )
             firstFlag = False
         else:
@@ -92,7 +86,7 @@ def compareData(sdf: DataFrame, tdf: DataFrame, outputPath: str, args: dict) -> 
             col(clm+'_pre').cast('string').alias('pre'),
             col(clm+'_post').cast('string').alias('post'),
             when(col(clm+'_pre').cast('int').isNotNull() & col(clm+'_post').cast('int').isNotNull(),\
-                 col(clm+'_pre')-col(clm+'_post')).otherwise(lit('Differences found')).alias('Comments')
+                 (col(clm+'_pre')-col(clm+'_post')).cast('string')).otherwise(lit('Differences found')).alias('Comments')
             ))
             
             
@@ -150,7 +144,7 @@ def countValidation(sdf: DataFrame, tdf: DataFrame, outputPath: str):
     with open(outputPath,'w+') as t:
             t.write(countResult)
         
-def DataTypeValidation(surl: str, turl: str, outputPath:str, stable: str, ttable: str, spark: SparkSession) -> DataFrame:
+def DataTypeValidation(surl: str, turl: str, outputPath:str, stable: str, ttable: str, spark: SparkSession, driver: str) -> DataFrame:
     dtQuery = '''SELECT COLUMN_NAME, DATA_TYPE+'('+ case when CHARACTER_MAXIMUM_LENGTH is not null then cast(CHARACTER_MAXIMUM_LENGTH as varchar) else
 case when NUMERIC_PRECISION is not null then cast(NUMERIC_PRECISION as varchar) +', '+cast(NUMERIC_SCALE as varchar)  else cast(DATETIME_PRECISION as varchar)  end end  +')' as datatype, ORDINAL_POSITION
 FROM INFORMATION_SCHEMA.COLUMNS 
@@ -197,27 +191,35 @@ def main(args):
     #print(spark.sparkContext._conf.getAll())
     #.config("spark.driver.extraClassPath",'C:\\TestData\\mssql-jdbc_auth-11.2.0.x64.dll') \
 
-    sourceURL = 'jdbc:sqlserver://{sourceURL};databaseName={sourceDatabase};username={sourceUser};password={sourcePassword};'.format(**vars(args))
-    targetURL = 'jdbc:sqlserver://{targetURL};databaseName={targetDatabase};username={targetUser};password={targetPassword};'.format(**vars(args))
+    # sourceURL = 'jdbc:sqlserver://{sourceURL};databaseName={sourceDatabase};username={sourceUser};password={sourcePassword};'.format(**vars(args))
+    # targetURL = 'jdbc:sqlserver://{targetURL};databaseName={targetDatabase};username={targetUser};password={targetPassword};'.format(**vars(args))
+    sourceURL = args.sourceURL
+    targetURL = args.targetURL
     
     #Get Source Data
-    sdf = getData(sourceURL, args.sourceTable, spark, args.filterCondition)
-    tdf = getData(targetURL, args.targetTable, spark, args.filterCondition)
+    sdf = getData(sourceURL, args.sourceTable, spark, args.filterCondition, args.sourceDriver)
+    tdf = getData(targetURL, args.targetTable, spark, args.filterCondition, args.targetDriver)
     #saveData(fdf, outputPath.replace('comparisionType','dataValidation').replace('filename',''), header=True, mode=
     # 'overwrite')
     
     #url = 'jdbc:sqlserver://GMWCNSQLV00288.gdc0.chevron.net\SQL02;databaseName=CREDIT_INT_T2;integratedSecurity=true;trusted_connection=true'
     #url = 'jdbc:sqlserver://cashappcredit-dev2-cvx.database.windows.net;databaseName=cashappcredit-dev2-cvx;username=dbadmin-cashappcredit-dev2;password=b6sJkWzqYBnXT1kvXeHtwQuCbCBQSsc9;'
+
+    if(args.steps=='1' or args.steps=='2' or args.steps=='0'):
+        compStart = datetime.datetime.now()
+        compareData(sdf, tdf, outputPath, vars(args))
+        print(f'Time Taken for Data Validation:{str(datetime.datetime.now()-compStart)}')
     
-    countstart = datetime.datetime.now()
-    countValidation(sdf, tdf, outputPath)
-    print(f'Time Taken for Count Validation:{str(datetime.datetime.now()-countstart)}')
-    dtStart = datetime.datetime.now()
-    DataTypeValidation(sourceURL, targetURL, outputPath, args.sourceTable, args.targetTable, spark)
-    print(f'Time Taken for Datatype Validation:{str(datetime.datetime.now()-dtStart)}')
-    compStart = datetime.datetime.now()
-    compareData(sdf, tdf, outputPath, vars(args))
-    print(f'Time Taken for Data Validation:{str(datetime.datetime.now()-compStart)}')
+    if(args.steps=='2' or args.steps=='0'):
+        countstart = datetime.datetime.now()
+        countValidation(sdf, tdf, outputPath)
+        print(f'Time Taken for Count Validation:{str(datetime.datetime.now()-countstart)}')
+        
+    if(args.steps=='0'):
+        dtStart = datetime.datetime.now()
+        DataTypeValidation(sourceURL, targetURL, outputPath, args.sourceTable, args.targetTable, spark, args.driver)
+        print(f'Time Taken for Datatype Validation:{str(datetime.datetime.now()-dtStart)}')
+        
 
 
     
@@ -226,14 +228,11 @@ def getArgs():
     parser = argparse.ArgumentParser(description='Validation Framework')
     parser.add_argument('-s','--sourceURL',help='Contains Source URL')
     parser.add_argument('-t','--targetURL',help='Contains Target URL')
-    parser.add_argument('-u','--sourceUser',help='Contains Source User')
-    parser.add_argument('-v','--targetUser',help='Contains Target User')
-    parser.add_argument('-p','--sourcePassword',help='Contains Source Password')
-    parser.add_argument('-q','--targetPassword',help='Contains Target Password')
-    parser.add_argument('-d','--sourceDatabase',help='Contains Source Database')
-    parser.add_argument('-f','--targetDatabase',help='Contains Target Database')
+    parser.add_argument('-u','--sourceDriver',help='Contains Source Driver Name')
+    parser.add_argument('-v','--targetDriver',help='Contains Target Driver Name')
     parser.add_argument('-a','--sourceTable',help='Contains Source Table')
     parser.add_argument('-b','--targetTable',help='Contains Target Table')
+    parser.add_argument('-n','--steps',help='Which step to run 0 for all, 1 for data comparision, 2 for data and count')
     parser.add_argument('-k','--keyColumns',help='Contains Key Columns')
     parser.add_argument('-e','--excludedColumns',help='Contains Columns To Exclude', default='abracadabra')
     parser.add_argument('-l','--filterCondition',help='Filter Condition', default=False)

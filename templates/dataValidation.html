@@ -7,7 +7,7 @@
     <body>
         <nav class="navbar sticky-top navbar-light bg-light">
             <div class="container-fluid">
-              <a class="navbar-brand" href="#">
+              <a class="navbar-brand" href="/">
                 Data Validation Framework using Spark ⚡️
               </a>
             </div>
@@ -21,6 +21,18 @@
                         <div class="card border border-success shadow-0 mb-3">
                             <h5 class="card-header">Source Database Details</h5>
                             <div class="card-body">
+                                <div class="row">
+                                    <div class="col" align="center">
+                                            <select id="sdriver" name="sdriver" class="form-control col-sm-4">
+                                                <option>Select Database</option>
+                                                {% for db in dbs %}
+                                                <option value="{{ db }}">{{ db }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <a href='/addDB'>Add new Database</a>
+                                    </div>
+                                </div>
+                                
                                 <div class="row">
                                     <div class="col">
                                         <div class="form-group">
@@ -68,6 +80,18 @@
                         <div class="card border border-success shadow-0 mb-3">
                             <h5 class="card-header">Target Database Details</h5>
                             <div class="card-body">
+                                <div class="row">
+                                    <div class="col" align="center">
+                                            <select id="tdriver" name="tdriver" class="form-control col-sm-4">
+                                                <option>Select Database</option>
+                                                {% for db in dbs %}
+                                                <option value="{{ db }}">{{ db }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <a href='#'>Add new Database</a>
+                                    </div>
+                                </div>
+                                
                                 <div class="row">
                                     <div class="col">
                                         <div class="form-group">

@@ -2,3 +2,4 @@ pyspark
 flask
 pandas
 gunicorn
+psutil
