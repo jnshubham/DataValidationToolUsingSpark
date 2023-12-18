@@ -3,7 +3,7 @@ from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, _
 from azure.core.exceptions import ResourceNotFoundError, ResourceExistsError
 
 #RDLAYbSpKBlgi6fLj1IGh1bGdV1M1g4vZFI04CoG2IvkLInMXtx964PYyRth99JH7l8NDb5XIzfO+AStb9Zrxw==
-cstr = '''DefaultEndpointsProtocol=https;AccountName=azure1earning;AccountKey=RDLAYbSpKBlgi6fLj1IGh1bGdV1M1g4vZFI04CoG2IvkLInMXtx964PYyRth99JH7l8NDb5XIzfO+AStb9Zrxw==;EndpointSuffix=core.windows.net'''
+cstr = '''DefaultEndpointsProtocol=https;AccountName=;AccountKey=;EndpointSuffix=core.windows.net'''
 
 
 # Create the BlobServiceClient object which will be used to create a container client
