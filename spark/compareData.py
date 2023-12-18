@@ -202,8 +202,6 @@ def main(args):
     #saveData(fdf, outputPath.replace('comparisionType','dataValidation').replace('filename',''), header=True, mode=
     # 'overwrite')
     
-    #url = 'jdbc:sqlserver://GMWCNSQLV00288.gdc0.chevron.net\SQL02;databaseName=CREDIT_INT_T2;integratedSecurity=true;trusted_connection=true'
-    #url = 'jdbc:sqlserver://cashappcredit-dev2-cvx.database.windows.net;databaseName=cashappcredit-dev2-cvx;username=dbadmin-cashappcredit-dev2;password=b6sJkWzqYBnXT1kvXeHtwQuCbCBQSsc9;'
 
     if(args.steps=='1' or args.steps=='2' or args.steps=='0'):
         compStart = datetime.datetime.now()
