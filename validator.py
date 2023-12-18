@@ -116,8 +116,6 @@ def fetchData(kwargs):
             datatypefilePath, datatypeFlag, datatypeResult, \
                 datafilePath, dataFlag, dataResult
      
-# args = fetchData(kwargs = {"filepath":"C:\\Users\\shujain8\\OneDrive - Publicis Groupe\\Documents\\GitHub\\DataValidationToolUsingSpark", "sourceTable":'config.calender'})
-# print(args)
 
 def getConfigs():
     configs = configparser.ConfigParser()
